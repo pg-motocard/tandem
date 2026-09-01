@@ -11,7 +11,7 @@ Sin instalar nada: en `~/.claude.json` (o donde registres tus servidores MCP),
 "rotacion-parejas": {
   "type": "stdio",
   "command": "npx",
-  "args": ["-y", "github:motocard/rotacion-parejas-mcp"],
+  "args": ["-y", "github:pg-motocard/rotacion-parejas-mcp"],
   "env": { "ROTACION_PARTICIPANTES": "Pablo,Fran,Xabi,Dani" }
 }
 ```
