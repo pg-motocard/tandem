@@ -3,26 +3,29 @@
 Servidor MCP (stdio) que genera la rotación semanal de parejas. Los participantes
 se configuran por variable de entorno, sin tocar código.
 
-## Instalación
-
-```bash
-npm install
-```
-
-Requiere Node con soporte de ES modules.
-
 ## Registro en Claude Code
 
-En `~/.claude.json` (o donde registres tus servidores MCP):
+Sin instalar nada: en `~/.claude.json` (o donde registres tus servidores MCP),
 
 ```json
 "rotacion-parejas": {
   "type": "stdio",
-  "command": "node",
-  "args": ["/Users/pablogonzalez/Desktop/motocard/software/rotacion-parejas-mcp/index.js"],
+  "command": "npx",
+  "args": ["-y", "github:motocard/rotacion-parejas-mcp"],
   "env": { "ROTACION_PARTICIPANTES": "Pablo,Fran,Xabi,Dani" }
 }
 ```
+
+`npx` descarga el paquete y sus dependencias la primera vez y luego lo cachea.
+Solo necesitas Node >= 18.
+
+Para desarrollar en local, apunta directamente al fichero:
+
+```json
+"args": ["/ruta/a/rotacion-parejas-mcp/index.js"], "command": "node"
+```
+
+(en ese caso, `npm install` una vez en el repo).
 
 `ROTACION_PARTICIPANTES`: nombres separados por comas. Si no se define, usa
 `Pablo,Fran,Xabi,Dani`. Mínimo 3 nombres y sin duplicados; si no, el servidor

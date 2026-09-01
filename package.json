@@ -10,5 +10,16 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.25.2"
   },
-  "license": "ISC"
+  "license": "ISC",
+  "bin": {
+    "rotacion-parejas-mcp": "index.js"
+  },
+  "files": [
+    "index.js",
+    "rotacion.js",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
 }
