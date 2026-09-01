@@ -1,41 +1,87 @@
 # rotacion-parejas-mcp
 
 Servidor MCP (stdio) que genera la rotación semanal de parejas. Los participantes
-se configuran por variable de entorno, sin tocar código.
+se configuran por argumentos o variable de entorno, y se pueden cambiar en cada
+llamada, sin tocar código.
 
-## Registro en Claude Code
+## Instalación
 
-Sin instalar nada: en `~/.claude.json` (o donde registres tus servidores MCP),
+Solo necesitas Node >= 18. `npx` descarga el paquete la primera vez y lo cachea.
+Los participantes van como argumentos (sueltos o separados por comas); si no
+pasas ninguno se usa `ROTACION_PARTICIPANTES` y, en su defecto, `Fran,Xabi,Dani`.
+
+### Claude Code
+
+```bash
+claude mcp add rotacion-parejas -- npx -y github:pg-motocard/rotacion-parejas-mcp Fran Xabi Dani
+```
+
+O a mano en `~/.claude.json`, dentro de `mcpServers`:
 
 ```json
 "rotacion-parejas": {
   "type": "stdio",
   "command": "npx",
-  "args": ["-y", "github:pg-motocard/rotacion-parejas-mcp"],
-  "env": { "ROTACION_PARTICIPANTES": "Pablo,Fran,Xabi,Dani" }
+  "args": ["-y", "github:pg-motocard/rotacion-parejas-mcp", "Fran", "Xabi", "Dani"]
 }
 ```
 
-`npx` descarga el paquete y sus dependencias la primera vez y luego lo cachea.
-Solo necesitas Node >= 18.
+### Claude Desktop
 
-Para desarrollar en local, apunta directamente al fichero:
+`claude_desktop_config.json` (macOS: `~/Library/Application Support/Claude/`,
+Windows: `%APPDATA%\Claude\`), dentro de `mcpServers`:
 
 ```json
-"args": ["/ruta/a/rotacion-parejas-mcp/index.js"], "command": "node"
+"rotacion-parejas": {
+  "command": "npx",
+  "args": ["-y", "github:pg-motocard/rotacion-parejas-mcp", "Fran", "Xabi", "Dani"]
+}
 ```
 
-(en ese caso, `npm install` una vez en el repo).
+Reinicia la app después de guardar.
 
-`ROTACION_PARTICIPANTES`: nombres separados por comas. Si no se define, usa
-`Pablo,Fran,Xabi,Dani`. Mínimo 3 nombres y sin duplicados; si no, el servidor
-no arranca.
+### Cursor
+
+`~/.cursor/mcp.json` (global) o `.cursor/mcp.json` (proyecto), dentro de
+`mcpServers`: mismo bloque que Claude Desktop.
+
+### Codex CLI
+
+`~/.codex/config.toml`:
+
+```toml
+[mcp_servers.rotacion-parejas]
+command = "npx"
+args = ["-y", "github:pg-motocard/rotacion-parejas-mcp", "Fran", "Xabi", "Dani"]
+```
+
+### Otro cliente MCP
+
+Cualquiera que hable stdio: comando `npx`, argumentos
+`-y github:pg-motocard/rotacion-parejas-mcp <nombres>`. Como alternativa a los
+argumentos, variable de entorno `ROTACION_PARTICIPANTES="Fran,Xabi,Dani"`.
+
+### En local (desarrollo)
+
+`npm install` una vez en el repo y apunta al fichero:
+
+```json
+"command": "node",
+"args": ["/ruta/a/rotacion-parejas-mcp/index.js", "Fran", "Xabi", "Dani"]
+```
 
 ## Uso
 
-Herramienta `rotacion_parejas(persona1, persona2)`: `persona1` y `persona2` son
-la pareja de la semana actual. Si una va en MAYÚSCULAS, esa persona repite la
-semana 2 con otra distinta.
+Herramienta `rotacion_parejas(persona1, persona2, participantes?)`:
+
+- `persona1` y `persona2`: la pareja de la semana actual. Si una va en
+  MAYÚSCULAS, esa persona repite la semana 2 con otra distinta.
+- `participantes` (opcional): lista separada por comas para *esa* llamada, sin
+  tocar la configuración. Útil para meter a alguien puntualmente:
+  `participantes: "Fran,Xabi,Dani,Laura"`.
+
+Mínimo 3 nombres y sin duplicados, tanto en la configuración (si no, el
+servidor no arranca) como en el parámetro (si no, la llamada devuelve el error).
 
 ## Reglas de rotación
 

@@ -4,25 +4,40 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import * as z from "zod/v4";
 import { generarCalendario, semanasPara, USO_MAX } from "./rotacion.js";
 
-const PARTICIPANTES = (process.env.ROTACION_PARTICIPANTES ?? "Pablo,Fran,Xabi,Dani")
-  .split(",")
-  .map((s) => s.trim())
-  .filter(Boolean);
+// Lista por defecto: argumentos de la linea de comandos, si no la variable de
+// entorno, si no el grupo habitual. Vale cualquier mezcla de comas y espacios.
+// En cada llamada se puede pasar otra lista con el parametro `participantes`.
+const ORIGEN = process.argv.length > 2 ? "los argumentos" : "ROTACION_PARTICIPANTES";
 
-if (PARTICIPANTES.length < 3) {
-  console.error(
-    `ROTACION_PARTICIPANTES necesita al menos 3 nombres separados por comas (hay ${PARTICIPANTES.length}).`
-  );
-  process.exit(1);
+// Devuelve la lista limpia o lanza con el motivo por el que no vale.
+function parsea(texto, origen) {
+  const nombres = texto.split(",").map((s) => s.trim()).filter(Boolean);
+  if (nombres.length < 3) {
+    throw new Error(`Se necesitan al menos 3 nombres en ${origen} (hay ${nombres.length}).`);
+  }
+  if (new Set(nombres.map((p) => p.toLowerCase())).size !== nombres.length) {
+    throw new Error(`Hay nombres duplicados en ${origen}.`);
+  }
+  return nombres;
 }
-if (new Set(PARTICIPANTES.map((p) => p.toLowerCase())).size !== PARTICIPANTES.length) {
-  console.error("ROTACION_PARTICIPANTES tiene nombres duplicados.");
+
+let PARTICIPANTES;
+try {
+  PARTICIPANTES = parsea(
+    process.argv.length > 2
+      ? process.argv.slice(2).join(",")
+      : process.env.ROTACION_PARTICIPANTES ?? "Fran,Xabi,Dani",
+    ORIGEN
+  );
+} catch (e) {
+  console.error(e.message);
+  console.error('Ejemplo: npx rotacion-parejas-mcp Fran Xabi Dani');
   process.exit(1);
 }
 
 // Nombre tal y como está configurado, buscando sin distinguir mayúsculas.
-const canonico = (nombre) =>
-  PARTICIPANTES.find((p) => p.toLowerCase() === nombre.trim().toLowerCase()) ?? null;
+const canonico = (participantes, nombre) =>
+  participantes.find((p) => p.toLowerCase() === nombre.trim().toLowerCase()) ?? null;
 
 const esMayusculas = (nombre) =>
   nombre === nombre.toUpperCase() && nombre !== nombre.toLowerCase();
@@ -45,12 +60,21 @@ const sumaDias = (fecha, dias) => {
   return nueva;
 };
 
-function rotacion(persona1Raw, persona2Raw) {
-  const p1 = canonico(persona1Raw);
-  const p2 = canonico(persona2Raw);
+function rotacion(persona1Raw, persona2Raw, participantesRaw) {
+  let participantes = PARTICIPANTES;
+  if (participantesRaw) {
+    try {
+      participantes = parsea(participantesRaw, "participantes");
+    } catch (e) {
+      return `Error: ${e.message}`;
+    }
+  }
+
+  const p1 = canonico(participantes, persona1Raw);
+  const p2 = canonico(participantes, persona2Raw);
 
   if (!p1 || !p2) {
-    return `Error: '${persona1Raw}' o '${persona2Raw}' no es válido. Participantes: ${PARTICIPANTES.join(", ")}`;
+    return `Error: '${persona1Raw}' o '${persona2Raw}' no es válido. Participantes: ${participantes.join(", ")}`;
   }
   if (p1 === p2) {
     return `Error: la pareja debe ser de dos personas distintas.`;
@@ -60,7 +84,7 @@ function rotacion(persona1Raw, persona2Raw) {
   if (esMayusculas(persona1Raw)) repetidor = p1;
   else if (esMayusculas(persona2Raw)) repetidor = p2;
 
-  const resultado = generarCalendario(PARTICIPANTES, p1, p2, repetidor);
+  const resultado = generarCalendario(participantes, p1, p2, repetidor);
   if (!resultado) {
     return "No se encontró un calendario válido con todas las restricciones.";
   }
@@ -78,7 +102,7 @@ function rotacion(persona1Raw, persona2Raw) {
   });
 
   lineas.push("", "Participaciones totales:");
-  for (const persona of PARTICIPANTES) {
+  for (const persona of participantes) {
     lineas.push(`${persona}: ${resultado.uso[persona]}`);
   }
 
@@ -93,18 +117,25 @@ server.registerTool(
     description:
       `Genera la rotación semanal de parejas (${semanasPara(PARTICIPANTES)} semanas, ${USO_MAX} apariciones por persona). ` +
       `Úsalo cuando el usuario pregunte quién va la semana siguiente a partir de una pareja dada (dos de ${PARTICIPANTES.join("/")}). ` +
-      `Si una persona va en MAYUSCULAS, esa persona repite la semana 2.`,
+      `Si una persona va en MAYUSCULAS, esa persona repite la semana 2. ` +
+      `Pasa 'participantes' para usar otro grupo solo en esta llamada.`,
     inputSchema: {
       persona1: z
         .string()
         .describe("Primera persona de la pareja actual (en MAYUSCULAS fuerza repeticion)"),
       persona2: z
         .string()
-        .describe("Segunda persona de la pareja actual (en MAYUSCULAS fuerza repeticion)")
+        .describe("Segunda persona de la pareja actual (en MAYUSCULAS fuerza repeticion)"),
+      participantes: z
+        .string()
+        .optional()
+        .describe(
+          `Lista de participantes separados por comas para esta llamada. Por defecto: ${PARTICIPANTES.join(", ")}`
+        )
     }
   },
-  async ({ persona1, persona2 }) => ({
-    content: [{ type: "text", text: rotacion(persona1, persona2) }]
+  async ({ persona1, persona2, participantes }) => ({
+    content: [{ type: "text", text: rotacion(persona1, persona2, participantes) }]
   })
 );
 
