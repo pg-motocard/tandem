@@ -1,14 +1,17 @@
 # rotacion-parejas-mcp
 
-Servidor MCP (stdio) que genera la rotación semanal de parejas. Los participantes
-se configuran por argumentos o variable de entorno, y se pueden cambiar en cada
-llamada, sin tocar código.
+Somebody has to be on duty this week, and next week, and the week after that.
+Left to a group chat, that argument runs forever. This is a stdio MCP server
+that settles it: give it this week's pair, get back the whole calendar.
 
-## Instalación
+No database, no config file, no cron. Names go in as arguments, the rotation
+comes out. That's the entire product.
 
-Solo necesitas Node >= 18. `npx` descarga el paquete la primera vez y lo cachea.
-Los participantes van como argumentos (sueltos o separados por comas); si no
-pasas ninguno se usa `ROTACION_PARTICIPANTES` y, en su defecto, `Fran,Xabi,Dani`.
+## Install
+
+Node >= 18 is all you need. `npx` fetches the package the first time and caches
+it. Participants are plain arguments (spaces or commas, your call); with none,
+it falls back to `ROTACION_PARTICIPANTES`, and then to `Fran,Xabi,Dani`.
 
 ### Claude Code
 
@@ -16,11 +19,11 @@ pasas ninguno se usa `ROTACION_PARTICIPANTES` y, en su defecto, `Fran,Xabi,Dani`
 claude mcp add -s user rotacion-parejas -- npx -y github:pg-motocard/rotacion-parejas-mcp Fran Xabi Dani
 ```
 
-`-s user` lo deja disponible desde cualquier directorio. Sin ese flag el scope
-es `local` y solo funciona en la carpeta desde la que lo añadiste.
+`-s user` makes it available from any directory. Drop the flag and the scope is
+`local`, meaning it only exists inside the folder you ran the command from.
 
-O a mano en `~/.claude.json`, dentro del `mcpServers` de primer nivel (el de
-dentro de `projects` es el scope local):
+Or by hand in `~/.claude.json`, under the top-level `mcpServers` (the one nested
+inside `projects` is the local scope):
 
 ```json
 "rotacion-parejas": {
@@ -33,7 +36,7 @@ dentro de `projects` es el scope local):
 ### Claude Desktop
 
 `claude_desktop_config.json` (macOS: `~/Library/Application Support/Claude/`,
-Windows: `%APPDATA%\Claude\`), dentro de `mcpServers`:
+Windows: `%APPDATA%\Claude\`), under `mcpServers`:
 
 ```json
 "rotacion-parejas": {
@@ -42,11 +45,11 @@ Windows: `%APPDATA%\Claude\`), dentro de `mcpServers`:
 }
 ```
 
-Reinicia la app después de guardar.
+Restart the app after saving.
 
 ### Cursor
 
-`~/.cursor/mcp.json` (global) o `.cursor/mcp.json` (proyecto), dentro de
+`~/.cursor/mcp.json` (global) or `.cursor/mcp.json` (per project), under
 `mcpServers`:
 
 ```json
@@ -66,47 +69,47 @@ command = "npx"
 args = ["-y", "github:pg-motocard/rotacion-parejas-mcp", "Fran", "Xabi", "Dani"]
 ```
 
-### Otro cliente MCP
+### Any other MCP client
 
-Cualquiera que hable stdio: comando `npx`, argumentos
-`-y github:pg-motocard/rotacion-parejas-mcp <nombres>`. Como alternativa a los
-argumentos, variable de entorno `ROTACION_PARTICIPANTES="Fran,Xabi,Dani"`.
+If it speaks stdio, it works: command `npx`, arguments
+`-y github:pg-motocard/rotacion-parejas-mcp <names>`. Instead of arguments you
+can set `ROTACION_PARTICIPANTES="Fran,Xabi,Dani"`.
 
-### En local (desarrollo)
+### Local development
 
-`npm install` una vez en el repo y apunta al fichero:
+`npm install` once in the repo, then point the client at the file:
 
 ```json
 "command": "node",
-"args": ["/ruta/a/rotacion-parejas-mcp/index.js", "Fran", "Xabi", "Dani"]
+"args": ["/path/to/rotacion-parejas-mcp/index.js", "Fran", "Xabi", "Dani"]
 ```
 
-## Uso
+## Usage
 
-Herramienta `rotacion_parejas(persona1, persona2, participantes?)`:
+One tool, `rotacion_parejas(persona1, persona2, participantes?)`:
 
-- `persona1` y `persona2`: la pareja de la semana actual. Si una va en
-  MAYÚSCULAS, esa persona repite la semana 2 con otra distinta.
-- `participantes` (opcional): lista separada por comas para *esa* llamada, sin
-  tocar la configuración. Útil para meter a alguien puntualmente:
+- `persona1` and `persona2`: this week's pair. Type one of them in CAPS and that
+  person stays on for week 2 with somebody else. Shouting is the API.
+- `participantes` (optional): a comma-separated list for *this call only*,
+  leaving your config alone. Handy when someone joins for a fortnight:
   `participantes: "Fran,Xabi,Dani,Laura"`.
 
-Mínimo 3 nombres y sin duplicados, tanto en la configuración (si no, el
-servidor no arranca) como en el parámetro (si no, la llamada devuelve el error).
+Three names minimum, no duplicates — in the config (or the server refuses to
+boot) and in the parameter (or the call comes back with the error).
 
-## Reglas de rotación
+## The rules
 
-Con N participantes:
+With N participants:
 
-- El calendario tiene `2N` semanas y cada persona aparece 4 veces.
-- La semana 1 es la pareja indicada.
-- Carry-over exacto: 1 persona de la semana anterior continúa en la siguiente
-  (por tanto nunca se repite la misma pareja dos semanas seguidas).
-- Nadie aparece 3 semanas seguidas.
-- Las fechas parten del lunes de la semana actual.
+- The calendar runs `2N` weeks and everybody shows up 4 times.
+- Week 1 is the pair you handed over.
+- Exactly one person carries over from each week into the next, so the same pair
+  never happens twice in a row.
+- Nobody works three weeks straight.
+- Dates start on the Monday of the current week.
 
-La búsqueda usa aleatoriedad, así que dos llamadas con los mismos argumentos
-pueden dar calendarios distintos (ambos válidos).
+The search is randomised, so the same arguments can produce different calendars.
+Both are correct. Pick your battles.
 
 ## Tests
 
@@ -114,5 +117,5 @@ pueden dar calendarios distintos (ambos válidos).
 npm test
 ```
 
-Comprueba las invariantes del calendario (semanas, apariciones, carry-over,
-3 semanas seguidas, repetidor) con 3, 4 y 5 participantes.
+Checks the invariants — week count, appearances, carry-over, no three in a row,
+the CAPS repeater — with 3, 4 and 5 participants.
