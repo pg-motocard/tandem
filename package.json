@@ -16,7 +16,7 @@
   },
   "files": [
     "index.js",
-    "rotacion.js",
+    "rotation.js",
     "README.md"
   ],
   "engines": {

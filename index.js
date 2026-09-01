@@ -2,142 +2,142 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import * as z from "zod/v4";
-import { generarCalendario, semanasPara, USO_MAX } from "./rotacion.js";
+import { buildCalendar, weeksFor, MAX_SHIFTS } from "./rotation.js";
 
-// Lista por defecto: argumentos de la linea de comandos, si no la variable de
-// entorno, si no el grupo habitual. Vale cualquier mezcla de comas y espacios.
-// En cada llamada se puede pasar otra lista con el parametro `participantes`.
-const ORIGEN = process.argv.length > 2 ? "los argumentos" : "ROTACION_PARTICIPANTES";
+// Default roster: command line arguments, then the environment variable, then
+// the usual suspects. Commas and spaces both work, mix them if you like.
+// Every call can override it through the `participants` parameter.
+const SOURCE = process.argv.length > 2 ? "the arguments" : "ROTATION_PARTICIPANTS";
 
-// Devuelve la lista limpia o lanza con el motivo por el que no vale.
-function parsea(texto, origen) {
-  const nombres = texto.split(",").map((s) => s.trim()).filter(Boolean);
-  if (nombres.length < 3) {
-    throw new Error(`Se necesitan al menos 3 nombres en ${origen} (hay ${nombres.length}).`);
+// Returns the clean list, or throws with the reason it is no good.
+function parse(text, source) {
+  const names = text.split(",").map((s) => s.trim()).filter(Boolean);
+  if (names.length < 3) {
+    throw new Error(`At least 3 names are needed in ${source} (got ${names.length}).`);
   }
-  if (new Set(nombres.map((p) => p.toLowerCase())).size !== nombres.length) {
-    throw new Error(`Hay nombres duplicados en ${origen}.`);
+  if (new Set(names.map((p) => p.toLowerCase())).size !== names.length) {
+    throw new Error(`There are duplicate names in ${source}.`);
   }
-  return nombres;
+  return names;
 }
 
-let PARTICIPANTES;
+let PARTICIPANTS;
 try {
-  PARTICIPANTES = parsea(
+  PARTICIPANTS = parse(
     process.argv.length > 2
       ? process.argv.slice(2).join(",")
-      : process.env.ROTACION_PARTICIPANTES ?? "Fran,Xabi,Dani",
-    ORIGEN
+      : process.env.ROTATION_PARTICIPANTS ?? "Fran,Xabi,Dani",
+    SOURCE
   );
 } catch (e) {
   console.error(e.message);
-  console.error('Ejemplo: npx rotacion-parejas-mcp Fran Xabi Dani');
+  console.error("Example: npx rotacion-parejas-mcp Fran Xabi Dani");
   process.exit(1);
 }
 
-// Nombre tal y como está configurado, buscando sin distinguir mayúsculas.
-const canonico = (participantes, nombre) =>
-  participantes.find((p) => p.toLowerCase() === nombre.trim().toLowerCase()) ?? null;
+// The name as configured, matched without caring about case.
+const canonical = (participants, name) =>
+  participants.find((p) => p.toLowerCase() === name.trim().toLowerCase()) ?? null;
 
-const esMayusculas = (nombre) =>
-  nombre === nombre.toUpperCase() && nombre !== nombre.toLowerCase();
+const isShouted = (name) =>
+  name === name.toUpperCase() && name !== name.toLowerCase();
 
-function lunesDeEstaSemana() {
-  const hoy = new Date();
-  hoy.setHours(0, 0, 0, 0);
-  hoy.setDate(hoy.getDate() - ((hoy.getDay() + 6) % 7));
-  return hoy;
+function mondayOfThisWeek() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  today.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+  return today;
 }
 
-const formatea = (fecha) =>
-  [fecha.getDate(), fecha.getMonth() + 1, fecha.getFullYear()]
+const format = (date) =>
+  [date.getDate(), date.getMonth() + 1, date.getFullYear()]
     .map((n, i) => (i < 2 ? String(n).padStart(2, "0") : n))
     .join("-");
 
-const sumaDias = (fecha, dias) => {
-  const nueva = new Date(fecha);
-  nueva.setDate(nueva.getDate() + dias);
-  return nueva;
+const addDays = (date, days) => {
+  const moved = new Date(date);
+  moved.setDate(moved.getDate() + days);
+  return moved;
 };
 
-function rotacion(persona1Raw, persona2Raw, participantesRaw) {
-  let participantes = PARTICIPANTES;
-  if (participantesRaw) {
+function rotation(person1Raw, person2Raw, participantsRaw) {
+  let participants = PARTICIPANTS;
+  if (participantsRaw) {
     try {
-      participantes = parsea(participantesRaw, "participantes");
+      participants = parse(participantsRaw, "participants");
     } catch (e) {
       return `Error: ${e.message}`;
     }
   }
 
-  const p1 = canonico(participantes, persona1Raw);
-  const p2 = canonico(participantes, persona2Raw);
+  const p1 = canonical(participants, person1Raw);
+  const p2 = canonical(participants, person2Raw);
 
   if (!p1 || !p2) {
-    return `Error: '${persona1Raw}' o '${persona2Raw}' no es válido. Participantes: ${participantes.join(", ")}`;
+    return `Error: '${person1Raw}' or '${person2Raw}' is not valid. Participants: ${participants.join(", ")}`;
   }
   if (p1 === p2) {
-    return `Error: la pareja debe ser de dos personas distintas.`;
+    return `Error: a pair is two different people.`;
   }
 
-  let repetidor = null;
-  if (esMayusculas(persona1Raw)) repetidor = p1;
-  else if (esMayusculas(persona2Raw)) repetidor = p2;
+  let repeater = null;
+  if (isShouted(person1Raw)) repeater = p1;
+  else if (isShouted(person2Raw)) repeater = p2;
 
-  const resultado = generarCalendario(participantes, p1, p2, repetidor);
-  if (!resultado) {
-    return "No se encontró un calendario válido con todas las restricciones.";
+  const result = buildCalendar(participants, p1, p2, repeater);
+  if (!result) {
+    return "No calendar satisfies every constraint.";
   }
 
-  const lineas = [];
-  if (repetidor) {
-    lineas.push(`Nota: ${repetidor} en MAYUSCULAS repite la semana 2 con otra persona.`, "");
+  const lines = [];
+  if (repeater) {
+    lines.push(`Note: ${repeater} was shouted, so they stay on for week 2 with somebody else.`, "");
   }
 
-  const lunes = lunesDeEstaSemana();
-  resultado.calendario.forEach(([a, b], i) => {
-    const inicio = sumaDias(lunes, i * 7);
-    const fin = sumaDias(inicio, 4);
-    lineas.push(`Semana ${i + 1} (${formatea(inicio)} - ${formatea(fin)}): ${a} - ${b}`);
+  const monday = mondayOfThisWeek();
+  result.calendar.forEach(([a, b], i) => {
+    const start = addDays(monday, i * 7);
+    const end = addDays(start, 4);
+    lines.push(`Week ${i + 1} (${format(start)} - ${format(end)}): ${a} - ${b}`);
   });
 
-  lineas.push("", "Participaciones totales:");
-  for (const persona of participantes) {
-    lineas.push(`${persona}: ${resultado.uso[persona]}`);
+  lines.push("", "Total shifts:");
+  for (const person of participants) {
+    lines.push(`${person}: ${result.shifts[person]}`);
   }
 
-  return lineas.join("\n");
+  return lines.join("\n");
 }
 
 const server = new McpServer({ name: "rotacion-parejas", version: "1.0.0" });
 
 server.registerTool(
-  "rotacion_parejas",
+  "pair_rotation",
   {
     description:
-      `Genera la rotación semanal de parejas (${semanasPara(PARTICIPANTES)} semanas, ${USO_MAX} apariciones por persona). ` +
-      `Úsalo cuando el usuario pregunte quién va la semana siguiente a partir de una pareja dada (dos de ${PARTICIPANTES.join("/")}). ` +
-      `Si una persona va en MAYUSCULAS, esa persona repite la semana 2. ` +
-      `Pasa 'participantes' para usar otro grupo solo en esta llamada.`,
+      `Builds the weekly pair rotation (${weeksFor(PARTICIPANTS)} weeks, ${MAX_SHIFTS} shifts per person). ` +
+      `Use it when the user asks who is on next week given the current pair (two of ${PARTICIPANTS.join("/")}). ` +
+      `A person written in CAPS stays on for week 2. ` +
+      `Pass 'participants' to use a different roster for this call only.`,
     inputSchema: {
-      persona1: z
+      person1: z
         .string()
-        .describe("Primera persona de la pareja actual (en MAYUSCULAS fuerza repeticion)"),
-      persona2: z
+        .describe("First person of the current pair (CAPS forces a repeat)"),
+      person2: z
         .string()
-        .describe("Segunda persona de la pareja actual (en MAYUSCULAS fuerza repeticion)"),
-      participantes: z
+        .describe("Second person of the current pair (CAPS forces a repeat)"),
+      participants: z
         .string()
         .optional()
         .describe(
-          `Lista de participantes separados por comas para esta llamada. Por defecto: ${PARTICIPANTES.join(", ")}`
+          `Comma-separated roster for this call. Defaults to: ${PARTICIPANTS.join(", ")}`
         )
     }
   },
-  async ({ persona1, persona2, participantes }) => ({
-    content: [{ type: "text", text: rotacion(persona1, persona2, participantes) }]
+  async ({ person1, person2, participants }) => ({
+    content: [{ type: "text", text: rotation(person1, person2, participants) }]
   })
 );
 
-console.error(`Starting server... participantes: ${PARTICIPANTES.join(", ")}`);
+console.error(`Starting server... participants: ${PARTICIPANTS.join(", ")}`);
 await server.connect(new StdioServerTransport());

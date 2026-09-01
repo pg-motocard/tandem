@@ -11,7 +11,7 @@ comes out. That's the entire product.
 
 Node >= 18 is all you need. `npx` fetches the package the first time and caches
 it. Participants are plain arguments (spaces or commas, your call); with none,
-it falls back to `ROTACION_PARTICIPANTES`, and then to `Fran,Xabi,Dani`.
+it falls back to `ROTATION_PARTICIPANTS`, and then to `Fran,Xabi,Dani`.
 
 ### Claude Code
 
@@ -73,7 +73,7 @@ args = ["-y", "github:pg-motocard/rotacion-parejas-mcp", "Fran", "Xabi", "Dani"]
 
 If it speaks stdio, it works: command `npx`, arguments
 `-y github:pg-motocard/rotacion-parejas-mcp <names>`. Instead of arguments you
-can set `ROTACION_PARTICIPANTES="Fran,Xabi,Dani"`.
+can set `ROTATION_PARTICIPANTS="Fran,Xabi,Dani"`.
 
 ### Local development
 
@@ -86,13 +86,13 @@ can set `ROTACION_PARTICIPANTES="Fran,Xabi,Dani"`.
 
 ## Usage
 
-One tool, `rotacion_parejas(persona1, persona2, participantes?)`:
+One tool, `pair_rotation(person1, person2, participants?)`:
 
-- `persona1` and `persona2`: this week's pair. Type one of them in CAPS and that
+- `person1` and `person2`: this week's pair. Type one of them in CAPS and that
   person stays on for week 2 with somebody else. Shouting is the API.
-- `participantes` (optional): a comma-separated list for *this call only*,
+- `participants` (optional): a comma-separated list for *this call only*,
   leaving your config alone. Handy when someone joins for a fortnight:
-  `participantes: "Fran,Xabi,Dani,Laura"`.
+  `participants: "Fran,Xabi,Dani,Laura"`.
 
 Three names minimum, no duplicates — in the config (or the server refuses to
 boot) and in the parameter (or the call comes back with the error).

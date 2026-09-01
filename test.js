@@ -1,55 +1,55 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { generarCalendario, semanasPara, USO_MAX } from "./rotacion.js";
+import { buildCalendar, weeksFor, MAX_SHIFTS } from "./rotation.js";
 
-function comprobarInvariantes(participantes, calendario) {
-  assert.equal(calendario.length, semanasPara(participantes), "número de semanas = 2N");
+function checkInvariants(participants, calendar) {
+  assert.equal(calendar.length, weeksFor(participants), "week count = 2N");
 
-  const uso = Object.fromEntries(participantes.map((p) => [p, 0]));
-  calendario.forEach((par, i) => {
-    assert.equal(par.length, 2);
-    assert.notEqual(par[0], par[1], `semana ${i + 1}: pareja repetida consigo misma`);
-    par.forEach((p) => (uso[p] += 1));
+  const shifts = Object.fromEntries(participants.map((p) => [p, 0]));
+  calendar.forEach((pair, i) => {
+    assert.equal(pair.length, 2);
+    assert.notEqual(pair[0], pair[1], `week ${i + 1}: somebody paired with themselves`);
+    pair.forEach((p) => (shifts[p] += 1));
 
     if (i > 0) {
-      const comunes = par.filter((p) => calendario[i - 1].includes(p)).length;
-      assert.equal(comunes, 1, `semana ${i + 1}: carry-over debe ser exactamente 1`);
+      const shared = pair.filter((p) => calendar[i - 1].includes(p)).length;
+      assert.equal(shared, 1, `week ${i + 1}: carry-over must be exactly 1`);
     }
     if (i > 1) {
-      for (const p of par) {
-        const tresSeguidas = calendario[i - 1].includes(p) && calendario[i - 2].includes(p);
-        assert.ok(!tresSeguidas, `semana ${i + 1}: ${p} aparece 3 semanas seguidas`);
+      for (const p of pair) {
+        const threeStraight = calendar[i - 1].includes(p) && calendar[i - 2].includes(p);
+        assert.ok(!threeStraight, `week ${i + 1}: ${p} works three weeks straight`);
       }
     }
   });
 
-  for (const p of participantes) {
-    assert.equal(uso[p], USO_MAX, `${p} debe aparecer ${USO_MAX} veces`);
+  for (const p of participants) {
+    assert.equal(shifts[p], MAX_SHIFTS, `${p} must show up ${MAX_SHIFTS} times`);
   }
 }
 
-// Aleatorio: repetimos para no depender de una tirada afortunada.
-for (const participantes of [
+// It is randomised, so we run it a few times instead of trusting one lucky roll.
+for (const participants of [
   ["Pablo", "Fran", "Xabi", "Dani"],
   ["Ana", "Bea", "Carla", "Dani", "Eva"],
-  ["Uno", "Dos", "Tres"]
+  ["One", "Two", "Three"]
 ]) {
-  test(`calendario válido con ${participantes.length} participantes`, () => {
+  test(`valid calendar with ${participants.length} participants`, () => {
     for (let i = 0; i < 20; i++) {
-      const resultado = generarCalendario(participantes, participantes[0], participantes[1]);
-      assert.ok(resultado, "debe existir calendario");
-      comprobarInvariantes(participantes, resultado.calendario);
+      const result = buildCalendar(participants, participants[0], participants[1]);
+      assert.ok(result, "a calendar must exist");
+      checkInvariants(participants, result.calendar);
     }
   });
 
-  test(`repetidor repite la semana 2 con ${participantes.length} participantes`, () => {
+  test(`the repeater stays on for week 2 with ${participants.length} participants`, () => {
     for (let i = 0; i < 20; i++) {
-      const rep = participantes[0];
-      const resultado = generarCalendario(participantes, rep, participantes[1], rep);
-      assert.ok(resultado, "debe existir calendario");
-      assert.ok(resultado.calendario[1].includes(rep), "el repetidor va en la semana 2");
-      assert.ok(!resultado.calendario[1].includes(participantes[1]), "con otra persona");
-      comprobarInvariantes(participantes, resultado.calendario);
+      const rep = participants[0];
+      const result = buildCalendar(participants, rep, participants[1], rep);
+      assert.ok(result, "a calendar must exist");
+      assert.ok(result.calendar[1].includes(rep), "the repeater is on week 2");
+      assert.ok(!result.calendar[1].includes(participants[1]), "with somebody else");
+      checkInvariants(participants, result.calendar);
     }
   });
 }
