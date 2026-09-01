@@ -90,21 +90,12 @@ function rotation(person1Raw, person2Raw, participantsRaw) {
   }
 
   const lines = [];
-  if (repeater) {
-    lines.push(`Note: ${repeater} was shouted, so they stay on for week 2 with somebody else.`, "");
-  }
-
   const monday = mondayOfThisWeek();
   result.calendar.forEach(([a, b], i) => {
     const start = addDays(monday, i * 7);
     const end = addDays(start, 4);
-    lines.push(`Week ${i + 1} (${format(start)} - ${format(end)}): ${a} - ${b}`);
+    lines.push(`Semana ${i + 1} (${format(start)} - ${format(end)}): ${a} - ${b}`);
   });
-
-  lines.push("", "Total shifts:");
-  for (const person of participants) {
-    lines.push(`${person}: ${result.shifts[person]}`);
-  }
 
   return lines.join("\n");
 }
