@@ -13,10 +13,14 @@ pasas ninguno se usa `ROTACION_PARTICIPANTES` y, en su defecto, `Fran,Xabi,Dani`
 ### Claude Code
 
 ```bash
-claude mcp add rotacion-parejas -- npx -y github:pg-motocard/rotacion-parejas-mcp Fran Xabi Dani
+claude mcp add -s user rotacion-parejas -- npx -y github:pg-motocard/rotacion-parejas-mcp Fran Xabi Dani
 ```
 
-O a mano en `~/.claude.json`, dentro de `mcpServers`:
+`-s user` lo deja disponible desde cualquier directorio. Sin ese flag el scope
+es `local` y solo funciona en la carpeta desde la que lo añadiste.
+
+O a mano en `~/.claude.json`, dentro del `mcpServers` de primer nivel (el de
+dentro de `projects` es el scope local):
 
 ```json
 "rotacion-parejas": {
@@ -43,7 +47,14 @@ Reinicia la app después de guardar.
 ### Cursor
 
 `~/.cursor/mcp.json` (global) o `.cursor/mcp.json` (proyecto), dentro de
-`mcpServers`: mismo bloque que Claude Desktop.
+`mcpServers`:
+
+```json
+"rotacion-parejas": {
+  "command": "npx",
+  "args": ["-y", "github:pg-motocard/rotacion-parejas-mcp", "Fran", "Xabi", "Dani"]
+}
+```
 
 ### Codex CLI
 
