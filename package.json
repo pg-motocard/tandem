@@ -1,0 +1,14 @@
+{
+  "name": "rotacion-parejas-mcp",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "description": "Servidor MCP que genera la rotación semanal de parejas",
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.2"
+  },
+  "license": "ISC"
+}
