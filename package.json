@@ -1,9 +1,9 @@
 {
-  "name": "rotacion-parejas-mcp",
+  "name": "tandem",
   "version": "1.0.0",
   "type": "module",
   "main": "index.js",
-  "description": "MCP server that generates the weekly pair rotation",
+  "description": "MCP server that keeps the weekly pair rotation honest",
   "scripts": {
     "test": "node --test"
   },
@@ -12,7 +12,7 @@
   },
   "license": "ISC",
   "bin": {
-    "rotacion-parejas-mcp": "index.js"
+    "tandem": "index.js"
   },
   "files": [
     "index.js",

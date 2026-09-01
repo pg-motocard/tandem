@@ -1,4 +1,4 @@
-# rotacion-parejas-mcp
+# Tandem
 
 Somebody has to be on duty this week, and next week, and the week after that.
 Left to a group chat, that argument runs forever. This is a stdio MCP server
@@ -16,7 +16,7 @@ it falls back to `ROTATION_PARTICIPANTS`, and then to `Fran,Xabi,Dani`.
 ### Claude Code
 
 ```bash
-claude mcp add -s user rotacion-parejas -- npx -y github:pg-motocard/rotacion-parejas-mcp Fran Xabi Dani
+claude mcp add -s user tandem -- npx -y github:pg-motocard/tandem Fran Xabi Dani
 ```
 
 `-s user` makes it available from any directory. Drop the flag and the scope is
@@ -26,10 +26,10 @@ Or by hand in `~/.claude.json`, under the top-level `mcpServers` (the one nested
 inside `projects` is the local scope):
 
 ```json
-"rotacion-parejas": {
+"tandem": {
   "type": "stdio",
   "command": "npx",
-  "args": ["-y", "github:pg-motocard/rotacion-parejas-mcp", "Fran", "Xabi", "Dani"]
+  "args": ["-y", "github:pg-motocard/tandem", "Fran", "Xabi", "Dani"]
 }
 ```
 
@@ -39,9 +39,9 @@ inside `projects` is the local scope):
 Windows: `%APPDATA%\Claude\`), under `mcpServers`:
 
 ```json
-"rotacion-parejas": {
+"tandem": {
   "command": "npx",
-  "args": ["-y", "github:pg-motocard/rotacion-parejas-mcp", "Fran", "Xabi", "Dani"]
+  "args": ["-y", "github:pg-motocard/tandem", "Fran", "Xabi", "Dani"]
 }
 ```
 
@@ -53,9 +53,9 @@ Restart the app after saving.
 `mcpServers`:
 
 ```json
-"rotacion-parejas": {
+"tandem": {
   "command": "npx",
-  "args": ["-y", "github:pg-motocard/rotacion-parejas-mcp", "Fran", "Xabi", "Dani"]
+  "args": ["-y", "github:pg-motocard/tandem", "Fran", "Xabi", "Dani"]
 }
 ```
 
@@ -64,15 +64,15 @@ Restart the app after saving.
 `~/.codex/config.toml`:
 
 ```toml
-[mcp_servers.rotacion-parejas]
+[mcp_servers.tandem]
 command = "npx"
-args = ["-y", "github:pg-motocard/rotacion-parejas-mcp", "Fran", "Xabi", "Dani"]
+args = ["-y", "github:pg-motocard/tandem", "Fran", "Xabi", "Dani"]
 ```
 
 ### Any other MCP client
 
 If it speaks stdio, it works: command `npx`, arguments
-`-y github:pg-motocard/rotacion-parejas-mcp <names>`. Instead of arguments you
+`-y github:pg-motocard/tandem <names>`. Instead of arguments you
 can set `ROTATION_PARTICIPANTS="Fran,Xabi,Dani"`.
 
 ### Local development
@@ -81,7 +81,7 @@ can set `ROTATION_PARTICIPANTS="Fran,Xabi,Dani"`.
 
 ```json
 "command": "node",
-"args": ["/path/to/rotacion-parejas-mcp/index.js", "Fran", "Xabi", "Dani"]
+"args": ["/path/to/tandem/index.js", "Fran", "Xabi", "Dani"]
 ```
 
 ## Usage

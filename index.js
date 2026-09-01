@@ -31,7 +31,7 @@ try {
   );
 } catch (e) {
   console.error(e.message);
-  console.error("Example: npx rotacion-parejas-mcp Fran Xabi Dani");
+  console.error("Example: npx tandem Fran Xabi Dani");
   process.exit(1);
 }
 
@@ -109,7 +109,7 @@ function rotation(person1Raw, person2Raw, participantsRaw) {
   return lines.join("\n");
 }
 
-const server = new McpServer({ name: "rotacion-parejas", version: "1.0.0" });
+const server = new McpServer({ name: "tandem", version: "1.0.0" });
 
 server.registerTool(
   "pair_rotation",
